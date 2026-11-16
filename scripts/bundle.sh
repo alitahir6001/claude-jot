@@ -32,6 +32,10 @@ cp -R "$APP" "$HOME/Applications/"
 install -m 755 .build/release/jot-cli "$HOME/.local/bin/jot-cli"
 echo "Installed ~/Applications/Jot.app and ~/.local/bin/jot-cli"
 
+mkdir -p "$HOME/.claude/skills/jot"
+cp skill/jot/SKILL.md "$HOME/.claude/skills/jot/SKILL.md"
+echo "Installed the jot skill for Claude Code"
+
 # Übersicht ignores symlinked widgets, so copy.
 WIDGETS="$HOME/Library/Application Support/Übersicht/widgets"
 if [ -d "$WIDGETS" ]; then
