@@ -60,9 +60,25 @@ export const render = ({ output, error }, dispatch) => {
     return <div style={{ opacity: 0.6 }}>jot: loading…</div>;
   }
   const shown = SECTIONS.filter(([key]) => a[key] && a[key].length);
-  if (!shown.length) return <div style={{ opacity: 0.6 }}>Nothing due</div>;
+  // The CLI emits claude items already ordered by project.
+  const projects = [];
+  (a.claude || []).forEach((item) => {
+    const last = projects[projects.length - 1];
+    if (last && last.name === item.project) last.items.push(item);
+    else projects.push({ name: item.project, items: [item] });
+  });
+  if (!shown.length && !projects.length) return <div style={{ opacity: 0.6 }}>Nothing due</div>;
   return (
     <div>
+      {projects.map(({ name, items }) => (
+        <div key={name}>
+          <div style={{ ...s.title, color: "#d9a066" }}>CLAUDE · {name.toUpperCase()}</div>
+          {items.slice(0, 6).map((item) => (
+            <Row key={item.id} item={item} dispatch={dispatch} />
+          ))}
+          {items.length > 6 && <div style={s.when}>+{items.length - 6} more</div>}
+        </div>
+      ))}
       {shown.map(([key, title, max]) => (
         <div key={key}>
           <div style={{ ...s.title, color: key === "overdue" ? "#ff7b72" : undefined }}>{title.toUpperCase()}</div>
