@@ -16,10 +16,11 @@ Swift 6 / SwiftPM, macOS 14+, Command Line Tools only (no Xcode: no XCTest and n
 ## Architecture (mental model)
 - `JotCore` (store, `DueParser`, `Agenda`) is shared by every front end.
 - `Jot` menu bar app and `jot-cli` both read and write `~/Library/Application Support/Jot/jot.db` (WAL mode). `JOT_DB` overrides the path.
+- Items with a `project` are asks from Claude Code sessions, filed by the `skill/jot` skill; they go to the agenda's `claude` bucket and nowhere else. Schema changes go through `PRAGMA user_version` in `Store.migrate()`.
 - The Übersicht widget only shells out to `~/.local/bin/jot-cli agenda --json` (and `done <id>`).
 
 ## Phase / status
-MVP done and on `main`. See `.ai/handoff.md` for the next feature (Claude Project TODOs).
+MVP on `main`. Claude Project TODOs (project column, "Claude" section, `skill/jot`) built on top; see `.ai/handoff.md` for live state.
 
 ## Active gotchas
 1. Übersicht ignores symlinked widgets. `scripts/bundle.sh` copies the widget instead.

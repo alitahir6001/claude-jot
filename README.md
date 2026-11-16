@@ -25,7 +25,9 @@ This builds a release, installs `~/Applications/Jot.app` (ad-hoc signed, menu ba
 ## CLI
 
 ```
-jot-cli add [-t] [-d <date>] <text>   add a note (-t: TODO, -d: "fri 3pm", "nov 20", ...)
+jot-cli add [-t] [-d <date>] [-p <project>] <text>
+                                      add a note (-t: TODO, -d: "fri 3pm", "nov 20", ...,
+                                      -p: file it under a Claude Code project)
 jot-cli agenda [--json]
 jot-cli find <text> [--json]
 jot-cli done <id> | undo <id> | rm <id>
@@ -33,6 +35,10 @@ jot-cli backup [dir]                  snapshot the DB (default ~/Documents/Jot B
 ```
 
 Set `JOT_DB=/path/to/file.db` to use a different database.
+
+## Claude Code asks
+
+`scripts/bundle.sh` also installs a `jot` skill into `~/.claude/skills/jot/`. With it, a Claude Code session files what it needs from you as a TODO under its project (`jot-cli add -t -p <project>`), and the panel and widget show those in a "Claude · <project>" section. Items appear only when Claude runs the skill or you type `/jot`; nothing is automatic.
 
 ## Layout
 
@@ -42,6 +48,7 @@ Sources/Jot/          menu bar app (NSStatusItem + NSPopover, Carbon hotkey)
 Sources/jot-cli/      command-line interface
 Tests/JotCoreTests/   Swift Testing suite
 widget/jot.widget/    Übersicht widget
+skill/jot/            Claude Code skill (copied to ~/.claude/skills/jot)
 scripts/bundle.sh     build + install
 ```
 
