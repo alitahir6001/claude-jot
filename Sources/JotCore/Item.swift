@@ -15,6 +15,7 @@ public struct Item: Identifiable, Equatable, Sendable {
     public var due: Due?
     public var createdAt: Date
     public var updatedAt: Date
+    public var project: String? = nil   // set = an ask from a Claude Code project
 }
 
 let iso = ISO8601DateFormatter()

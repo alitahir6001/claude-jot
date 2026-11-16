@@ -1,4 +1,5 @@
 import Foundation
+import SQLite3
 import Testing
 @testable import JotCore
 
@@ -118,6 +119,28 @@ func p(_ s: String) -> Due? { DueParser.parse(s, now: now, calendar: ny) }
         #expect(a.notes.map(\.id) == [9])
         #expect(a.doneToday.map(\.id) == [10])
     }
+
+    @Test func projectItemsGoToClaudeOnly() {
+        var dated = item(1, .open, .day("2026-11-14"))
+        dated.project = "jot"
+        var undated = item(2, .open, nil)
+        undated.project = "api"
+        var finished = item(3, .done, nil, updated: at(2026, 11, 15, 8))
+        finished.project = "jot"
+        let a = Agenda.build([dated, undated, finished, item(4, .open, nil)], now: now, calendar: ny)
+        #expect(a.claude.map(\.id) == [2, 1])   // newest first
+        #expect(a.overdue.isEmpty)
+        #expect(a.todo.map(\.id) == [4])
+        #expect(a.doneToday.map(\.id) == [3])
+    }
+
+    @Test func byProjectGroupsAndSortsByName() {
+        var a = item(1, .open, nil), b = item(2, .open, nil), c = item(3, .open, nil)
+        a.project = "jot"; b.project = "API"; c.project = "jot"
+        let groups = Agenda.byProject([c, b, a])
+        #expect(groups.map(\.project) == ["API", "jot"])
+        #expect(groups.map { $0.items.map(\.id) } == [[2], [3, 1]])
+    }
 }
 
 @Suite struct StoreTests {
@@ -143,6 +166,39 @@ func p(_ s: String) -> Due? { DueParser.parse(s, now: now, calendar: ny) }
         #expect(try s.delete(a.id))
         #expect(try s.get(a.id) == nil)
         #expect(try s.delete(a.id) == false)
+    }
+
+    @Test func projectRoundTrips() throws {
+        let s = try tempStore()
+        let a = try s.add("pick a port", status: .open, project: "jot", now: now)
+        #expect(try s.get(a.id)?.project == "jot")
+        var edited = a
+        edited.body = "pick a port number"
+        try s.update(edited, now: now)
+        #expect(try s.get(a.id)?.project == "jot")
+        #expect(try s.add("plain").project == nil)
+    }
+
+    @Test func migratesOldSchemaKeepingRows() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let path = dir.appendingPathComponent("jot.db").path
+        var db: OpaquePointer?
+        #expect(sqlite3_open(path, &db) == SQLITE_OK)
+        let old = """
+            CREATE TABLE items(id INTEGER PRIMARY KEY, body TEXT NOT NULL,
+              status TEXT CHECK (status IN ('open', 'done')), due TEXT,
+              created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+            INSERT INTO items(body, status, created_at, updated_at)
+              VALUES ('old row', 'open', '2026-11-01T00:00:00Z', '2026-11-01T00:00:00Z');
+            """
+        #expect(sqlite3_exec(db, old, nil, nil, nil) == SQLITE_OK)
+        sqlite3_close(db)
+
+        let s = try Store(path: path)
+        #expect(try s.search("old").map(\.project) == [nil])
+        #expect(try s.add("new", project: "jot").project == "jot")
+        _ = try Store(path: path)   // reopening must not re-run the ALTER
     }
 
     @Test func searchFindsMidBodyWord() throws {

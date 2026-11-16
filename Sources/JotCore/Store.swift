@@ -11,7 +11,7 @@ enum SQLValue {
 }
 
 private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-private let cols = "id, body, status, due, created_at, updated_at"
+private let cols = "id, body, status, due, created_at, updated_at, project"
 
 public final class Store {
     private var db: OpaquePointer?
@@ -44,21 +44,46 @@ public final class Store {
               updated_at TEXT NOT NULL
             )
             """)
+        try migrate()
     }
 
     deinit { sqlite3_close(db) }
 
+    private func migrate() throws {
+        // IMMEDIATE: the app and CLI may open an old DB at the same moment.
+        try exec("BEGIN IMMEDIATE")
+        do {
+            if try userVersion() < 1 {
+                try exec("ALTER TABLE items ADD COLUMN project TEXT")
+                try exec("PRAGMA user_version = 1")
+            }
+            try exec("COMMIT")
+        } catch {
+            try? exec("ROLLBACK")
+            throw error
+        }
+    }
+
+    private func userVersion() throws -> Int64 {
+        let st = try prepare("PRAGMA user_version", [])
+        defer { sqlite3_finalize(st) }
+        guard sqlite3_step(st) == SQLITE_ROW else { throw lastError() }
+        return sqlite3_column_int64(st, 0)
+    }
+
     @discardableResult
-    public func add(_ body: String, status: Status? = nil, due: Due? = nil, now: Date = Date()) throws -> Item {
+    public func add(_ body: String, status: Status? = nil, due: Due? = nil, project: String? = nil,
+                    now: Date = Date()) throws -> Item {
         let ts = iso.string(from: now)
-        try run("INSERT INTO items(body, status, due, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-                [.text(body), .of(status?.rawValue), .of(due?.stored), .text(ts), .text(ts)])
+        try run("INSERT INTO items(body, status, due, created_at, updated_at, project) VALUES (?, ?, ?, ?, ?, ?)",
+                [.text(body), .of(status?.rawValue), .of(due?.stored), .text(ts), .text(ts), .of(project)])
         return try get(sqlite3_last_insert_rowid(db))!
     }
 
     public func update(_ item: Item, now: Date = Date()) throws {
-        try run("UPDATE items SET body = ?, status = ?, due = ?, updated_at = ? WHERE id = ?",
-                [.text(item.body), .of(item.status?.rawValue), .of(item.due?.stored), .text(iso.string(from: now)), .int(item.id)])
+        try run("UPDATE items SET body = ?, status = ?, due = ?, project = ?, updated_at = ? WHERE id = ?",
+                [.text(item.body), .of(item.status?.rawValue), .of(item.due?.stored), .of(item.project),
+                 .text(iso.string(from: now)), .int(item.id)])
     }
 
     @discardableResult
@@ -134,7 +159,8 @@ public final class Store {
                 status: text(st, 2).flatMap(Status.init(rawValue:)),
                 due: text(st, 3).flatMap(Due.init(stored:)),
                 createdAt: text(st, 4).flatMap(iso.date(from:)) ?? .distantPast,
-                updatedAt: text(st, 5).flatMap(iso.date(from:)) ?? .distantPast))
+                updatedAt: text(st, 5).flatMap(iso.date(from:)) ?? .distantPast,
+                project: text(st, 6)))
         }
         return out
     }

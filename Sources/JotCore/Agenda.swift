@@ -7,8 +7,16 @@ public struct Agenda: Equatable, Sendable {
     public var todo: [Item] = []       // open TODOs with no date
     public var notes: [Item] = []      // undated notes
     public var doneToday: [Item] = []
+    public var claude: [Item] = []     // not-done items with a project, dated or not
 
     public init() {}
+
+    /// Groups sorted by project name; items keep their order.
+    public static func byProject(_ items: [Item]) -> [(project: String, items: [Item])] {
+        Dictionary(grouping: items) { $0.project ?? "" }
+            .sorted { $0.key.localizedCaseInsensitiveCompare($1.key) == .orderedAscending }
+            .map { (project: $0.key, items: $0.value) }
+    }
 
     /// Done items show only on the day they were finished; past dated notes drop off (still searchable).
     public static func build(_ items: [Item], now: Date, calendar cal: Calendar) -> Agenda {
@@ -17,6 +25,10 @@ public struct Agenda: Equatable, Sendable {
         for item in items {
             if item.status == .done {
                 if cal.isDate(item.updatedAt, inSameDayAs: now) { a.doneToday.append(item) }
+                continue
+            }
+            if item.project != nil {
+                a.claude.append(item)
                 continue
             }
             guard let due = item.due else {
@@ -40,6 +52,7 @@ public struct Agenda: Equatable, Sendable {
         a.todo.sort { $0.createdAt > $1.createdAt }
         a.notes.sort { $0.createdAt > $1.createdAt }
         a.doneToday.sort { $0.updatedAt > $1.updatedAt }
+        a.claude.sort { $0.createdAt > $1.createdAt }
         return a
     }
 }
