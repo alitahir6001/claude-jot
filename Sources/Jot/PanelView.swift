@@ -34,6 +34,9 @@ struct PanelView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     if model.query.isEmpty {
                         let a = model.agenda
+                        ForEach(Agenda.byProject(a.claude), id: \.project) { group in
+                            SectionView(title: "Claude · \(group.project)", items: group.items, model: model)
+                        }
                         SectionView(title: "Overdue", items: a.overdue, model: model, urgent: true)
                         SectionView(title: "Today", items: a.today, model: model)
                         SectionView(title: "Upcoming", items: a.upcoming, model: model)
