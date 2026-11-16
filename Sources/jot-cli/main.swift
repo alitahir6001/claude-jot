@@ -3,7 +3,9 @@ import JotCore
 
 let usage = """
     usage:
-      jot-cli add [-t] [-d <date>] <text>   add a note (-t: TODO, -d: "fri 3pm", "nov 20", ...)
+      jot-cli add [-t] [-d <date>] [-p <project>] <text>
+                                            add a note (-t: TODO, -d: "fri 3pm", "nov 20", ...,
+                                            -p: file it under a Claude Code project)
       jot-cli agenda [--json]
       jot-cli find <text> [--json]
       jot-cli done <id> | undo <id> | rm <id>
@@ -11,10 +13,10 @@ let usage = """
     """
 
 struct Row: Encodable {
-    let id: Int64, body: String, todo: Bool, done: Bool, label: String?
+    let id: Int64, body: String, todo: Bool, done: Bool, label: String?, project: String?
     init(_ i: Item) {
         id = i.id; body = i.body; todo = i.status != nil; done = i.status == .done
-        label = i.due?.label()
+        label = i.due?.label(); project = i.project
     }
 }
 
@@ -32,7 +34,8 @@ func printJSON<T: Encodable>(_ v: T) {
 func line(_ i: Item) -> String {
     let box = i.status == nil ? "-" : (i.status == .done ? "[x]" : "[ ]")
     let when = i.due.map { "  (\($0.label()))" } ?? ""
-    return "  #\(i.id) \(box) \(i.body)\(when)"
+    let project = i.project.map { "[\($0)] " } ?? ""
+    return "  #\(i.id) \(box) \(project)\(i.body)\(when)"
 }
 
 func idArg(_ args: [String]) -> Int64 {
@@ -50,11 +53,14 @@ do {
     let store = try Store()
     switch cmd {
     case "add":
-        var todo = false, dateText: String?, words: [String] = []
+        var todo = false, dateText: String?, project: String?, words: [String] = []
         var it = args.makeIterator()
         while let a = it.next() {
             switch a {
             case "-t": todo = true
+            case "-p":
+                guard let p = it.next(), !p.isEmpty else { fail("-p needs a project") }
+                project = p
             case "-d":
                 guard let d = it.next() else { fail("-d needs a date") }
                 dateText = d
@@ -68,13 +74,13 @@ do {
             guard let d = DueParser.parse(dateText) else { fail("can't read date: \(dateText)") }
             due = d
         }
-        let item = try store.add(body, status: todo ? .open : nil, due: due)
+        let item = try store.add(body, status: todo ? .open : nil, due: due, project: project)
         print("added" + line(item))
 
     case "agenda":
         let a = try store.agenda()
         let sections: [(String, [Item])] = [
-            ("overdue", a.overdue), ("today", a.today), ("upcoming", a.upcoming),
+            ("claude", Agenda.byProject(a.claude).flatMap(\.items)), ("overdue", a.overdue), ("today", a.today), ("upcoming", a.upcoming),
             ("todo", a.todo), ("notes", a.notes), ("doneToday", a.doneToday),
         ]
         if json {
