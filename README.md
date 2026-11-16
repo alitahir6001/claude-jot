@@ -50,6 +50,7 @@ Tests/JotCoreTests/   Swift Testing suite
 widget/jot.widget/    Übersicht widget
 skill/jot/            Claude Code skill (copied to ~/.claude/skills/jot)
 scripts/bundle.sh     build + install
+docs/adr/             decision records (start at docs/adr/README.md)
 ```
 
 ## Tests
