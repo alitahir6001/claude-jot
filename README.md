@@ -38,7 +38,7 @@ Set `JOT_DB=/path/to/file.db` to use a different database.
 
 ## Claude Code asks
 
-`scripts/bundle.sh` also installs a `jot` skill into `~/.claude/skills/jot/`. With it, a Claude Code session files what it needs from you as a TODO under its project (`jot-cli add -t -p <project>`), and the panel and widget show those in a "Claude · <project>" section. Items appear only when Claude runs the skill or you type `/jot`; nothing is automatic.
+`scripts/bundle.sh` also installs a `jot` skill into `~/.claude/skills/jot/`. Type `/jot` in a Claude Code session and it files what that project needs from you as TODOs under the project's name (`jot-cli add -t -p <project>`), reading the project's `.ai/handoff.md` and the session. The panel and widget show them in a "Claude · <project>" section. Only you can run it; Claude never files items on its own.
 
 ## Layout
 
