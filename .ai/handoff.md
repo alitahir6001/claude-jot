@@ -4,14 +4,14 @@
 2026-11-16, session 2
 
 ## Current state
-Claude Project TODOs is built, installed, and pushed to `main` (local branch `feat/mvp` tracks it). Scope was cut to skill only: items carry a `project`, show in a "Claude · <project>" section in the panel and widget, and are filed by the `jot` skill (`skill/jot/SKILL.md`, copied to `~/.claude/skills/jot/` by `scripts/bundle.sh`). `swift test` passes (18 tests); the real DB migrated to `user_version` 1. Decisions are recorded in `docs/adr/` (6 ADRs, index in `docs/adr/README.md`).
+Claude Project TODOs is built, installed, and pushed to `main` (local branch `feat/mvp` tracks it). Scope was cut to skill only: items carry a `project`, show in a "Claude · <project>" section in the panel and widget, and are filed by the `jot` skill, which only the user runs: `/jot` populates the current project's TODOs from its handoff and the session (user's correction, 2026-11-16; ADR-0007) (`skill/jot/SKILL.md`, copied to `~/.claude/skills/jot/` by `scripts/bundle.sh`). `swift test` passes (18 tests); the real DB migrated to `user_version` 1. Decisions are recorded in `docs/adr/` (7 ADRs, index in `docs/adr/README.md`).
 
 ## Active task
 **Claude Project TODOs: verify.**
 - [x] Schema `project` column, `Agenda.claude` + `byProject`, `jot-cli add -p`, `claude` key in `agenda --json`.
 - [x] Panel and widget sections; skill; bundle step; README.
 - [x] Visual check of the panel and widget: user confirmed both show the Claude section (2026-11-16).
-- [ ] Confirm a fresh Claude Code session triggers the `jot` skill unprompted (skills load at session start). Owner: user + Claude.
+- [ ] Run `/jot` in a fresh session (skills load at session start) and confirm it files this project's TODOs. Owner: user.
 - [x] Committed and pushed.
 
 ## Open threads
@@ -21,7 +21,7 @@ Claude Project TODOs is built, installed, and pushed to `main` (local branch `fe
 - Widget checkboxes need an Übersicht interaction shortcut + Accessibility (user's step, not done).
 
 ## Next recommended step
-In a fresh session, see whether Claude files an ask through the `jot` skill unprompted.
+User runs `/jot` in a fresh session.
 
 ## Out of scope
 Reminders/notifications, sync, accounts, rich text, desktop WidgetKit widget (needs Xcode, which the user declined).
