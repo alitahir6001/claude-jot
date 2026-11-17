@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded by ADR-0007
 date: 2026-11-16
 ---
 # Claude Code asks filed by a skill, not hooks
@@ -27,4 +27,4 @@ The `jot` skill (`skill/jot/SKILL.md`) tells Claude to file an ask with `jot-cli
 * Bad, because schema changes now need a migration path, handled by `PRAGMA user_version` in `Store.migrate()`.
 
 ## More Information
-Evidence: commits 2735574, 987bbac, 2f6530c, 7dc40e9, dcdc1ed; `skill/jot/SKILL.md`; `Sources/JotCore/Agenda.swift`; `AgendaTests.projectItemsGoToClaudeOnly`; `StoreTests.migratesOldSchemaKeepingRows`. Hook findings, should the automatic part be revisited: `.ai/handoff.md`, Open threads. Related: [ADR-0005](0005-one-sqlite-file-shared-through-jotcore.md).
+Evidence: commits 2735574, 987bbac, 2f6530c, 7dc40e9, dcdc1ed; `skill/jot/SKILL.md`; `Sources/JotCore/Agenda.swift`; `AgendaTests.projectItemsGoToClaudeOnly`; `StoreTests.migratesOldSchemaKeepingRows`. Hook findings, should the automatic part be revisited: `.ai/handoff.md`, Open threads. Related: [ADR-0005](0005-one-sqlite-file-shared-through-jotcore.md). Superseded by [ADR-0007](0007-jot-skill-is-user-invoked-and-populates-the-current-project.md).
